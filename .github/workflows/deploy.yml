@@ -25,10 +25,10 @@ jobs:
         run: zip -r lambda.zip . -x node_modules/\*
 
       - name: Deploy to AWS Lambda
-        uses: aws-actions/aws-lambda-deploy@v1
+        uses: appleboy/lambda-action@v1.2.0
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-south-1
-          function-name: LauntriServ
-          zip-file: lambda.zip
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: us-south-1
+          function_name: LauntriServ
+          zip_file: lambda.zip
