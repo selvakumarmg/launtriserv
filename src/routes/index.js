@@ -1,13 +1,10 @@
 const express = require('express');
-const router = express.Router();
+const bodyParser = require('body-parser');
+const users = require('./users');
 
-// Sample route
-router.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the Basic Node API!' });
-});
+const app = express();
 
-router.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date() });
-});
+app.use(bodyParser.json());
+app.use('/api/v1', users);
 
-module.exports = router;
+module.exports = app;
