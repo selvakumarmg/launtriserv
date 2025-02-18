@@ -1,0 +1,27 @@
+name: Deploy to GoDaddy cPanel
+
+on:
+  push:
+    branches:
+      - master  # Change this if needed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies (Optional)
+        run: |
+          npm install
+          npm run build  # Modify if needed
+
+      - name: Deploy to GoDaddy via FTP
+        uses: appleboy/ftp-action@v0.2.0
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+
