@@ -9,7 +9,7 @@ app.get('/v1/test', (req, res) => {
   });
 });
 
-// Server setup
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
