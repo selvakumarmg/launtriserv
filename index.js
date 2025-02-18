@@ -1,19 +1,14 @@
-const http = require('http'); // Import the http module
-const app = require('./src/routes'); // Assuming your routes are in 'src/routes'
-const PORT = 3000;
+const http = require('http');
 
-const server = http.createServer(app); // Create the HTTP server using your app
+const server = http.createServer((req, res) => {
+    res.setHeader('Content-Type', 'text/plain');
 
-// Define the route
-app.get('/v1/test', (req, res) => {
-  res.status(200).send({
-    message: 'Launtri API Hosted',
-    status: 'success',
-    code: 200
-  });
+    res.write('Welcome Launtri!\n API Version 1');
+
+    res.end();
 });
 
-// Start the server to listen on http://0.0.0.0 (accessible externally) and the specified port
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on http://0.0.0.0:${PORT}`);
+const port = 3000;
+server.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
 });
