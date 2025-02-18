@@ -2,7 +2,7 @@ const app = require('./src/routes');
 
 const PORT = 3000;
 
-app.get('/', (req, res) => {
+app.get('/api/v1/test', (req, res) => {
   res.send('Launtri API Hosted');
 })
 
