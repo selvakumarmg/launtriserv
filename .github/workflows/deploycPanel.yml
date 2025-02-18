@@ -1,24 +1,23 @@
-name: Publish Website to CPanel
+name: Publish Website to cPanel
 
 on:
   push:
     branches:
-      - master  # Change this if needed
+      - master
 
 jobs:
   FTP-Deploy-Action:
-    name: FTP-Deploy-Action
+    name: FTP Deploy Action
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2.1.0
-        with:
-          fetch-depth: 2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-      - name: FTP-Deploy-Action
+      - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          ftp-server: ${{ secrets.FTP_SERVER }}
-          ftp-username: ${{ secrets.FTP_USERNAME }}
-          ftp-password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: "./build/"  # Change based on your project
+          server: ${{ secrets.FTP_SERVER }}  # Use 'server' instead of 'ftp-server'
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./build/
