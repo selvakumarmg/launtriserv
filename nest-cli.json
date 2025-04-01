@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/launtriserv-api-gateway/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/launtriserv-api-gateway/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/launtriserv-api-gateway",
+  "projects": {
+    "launtriserv-api-gateway": {
+      "type": "application",
+      "root": "apps/launtriserv-api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/launtriserv-api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/launtriserv-api-gateway/tsconfig.app.json"
+      }
+    },
+    "userserv": {
+      "type": "application",
+      "root": "apps/userserv",
+      "entryFile": "main",
+      "sourceRoot": "apps/userserv/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/userserv/tsconfig.app.json"
+      }
+    }
+  }
+}
