@@ -7,7 +7,8 @@ import { CustomersModule } from './v1/customers/customers.module';
 @Module({
   imports: [
     DatabaseModule,
-    CustomersModule
+    CustomersModule,
+    
   ],
   controllers: [UserservController],
   providers: [UserservService],

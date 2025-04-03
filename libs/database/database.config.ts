@@ -11,7 +11,7 @@ const databaseConfigs: DatabaseConfig = {
     port: Number(process.env.DB_PORT) || 3306,
     username: process.env.DB_USER || 'root',
     password: process.env.DB_PASS || 'admin',
-    database: process.env.DB_NAME || 'launtriserv',
+    database: process.env.DB_NAME || 'launtri_db',
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     autoLoadEntities: true,
     synchronize: true,
