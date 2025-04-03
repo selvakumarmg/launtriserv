@@ -1,14 +1,28 @@
-import { Controller, Get, Query, HttpException, HttpStatus, Put, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Query, Put, Body, Param, Post } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
-import { User } from '@app/database/entities/user.entity';
+import { User } from '../../database/entities/user.entity';
+import { 
+  NotFoundException, 
+  InternalServerErrorException,
+  BadRequestException 
+} from '@app/common/errors';
+
+export class GetOTPRequestDto {
+  email: string;
+  phone: string;
+}
+
+export class VerifyOTPRequestDto {
+  userId: number;
+  otp: string;
+}
 
 export class ApiResponseDto<T> {
   statusCode: number;
   message: string;
   data?: T;
 }
-
 
 @ApiTags('Customers')
 @Controller('v1/customers')
@@ -19,18 +33,16 @@ export class CustomersController {
   @ApiOperation({ summary: 'Get all customers' })
   @ApiResponse({ status: 200, description: 'Returns all customers' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getAllCustomers(): Promise<User[]> {
+  async getAllCustomers(): Promise<ApiResponseDto<User[]>> {
     try {
-      return await this.customersService.getAllCustomers();
+      const customers = await this.customersService.getAllCustomers();
+      return {
+        statusCode: 200,
+        message: 'Customers fetched successfully',
+        data: customers,
+      };
     } catch (error) {
-      throw new HttpException(
-        {
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: error.message || 'Internal server error',
-          error: error.name,
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -48,37 +60,26 @@ export class CustomersController {
     @Query('phone') phone?: string,
   ): Promise<ApiResponseDto<User>> {
     try {
+      if (!id && !email && !phone) {
+        throw new BadRequestException('At least one search parameter (id, email, or phone) is required');
+      }
+
       const user = await this.customersService.getUserByIdOrEmailOrPhone(id, email, phone);
       
       if (!user) {
-        throw new HttpException(
-          {
-            statusCode: HttpStatus.NOT_FOUND,
-            message: 'User not found',
-          },
-          HttpStatus.NOT_FOUND,
-        );
+        throw new NotFoundException('User not found');
       }
 
-      const res = {
-        statusCode: HttpStatus.OK,
+      return {
+        statusCode: 200,
         message: 'User details fetched successfully',
         data: user,
       };
-
-      return res;
     } catch (error) {
-      if (error instanceof HttpException) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
-      throw new HttpException(
-        {
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: error.message || 'Internal server error',
-          error: error.name,
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -93,36 +94,97 @@ export class CustomersController {
     @Body() updateData: Partial<User>,
   ): Promise<ApiResponseDto<User>> {
     try {
+      if (!id) {
+        throw new BadRequestException('Customer ID is required');
+      }
+
       const updatedUser = await this.customersService.updateUser(id, updateData);
-    console.log('Updating user with ID:', id, 'with data:', updateData);
       
       if (!updatedUser) {
-        throw new HttpException(
-          {
-            statusCode: HttpStatus.NOT_FOUND,
-            message: 'Customer not found',
-          },
-          HttpStatus.NOT_FOUND,
-        );
+        throw new NotFoundException('Customer not found');
       }
 
       return {
-        statusCode: HttpStatus.OK,
+        statusCode: 200,
         message: 'Customer updated successfully',
         data: updatedUser,
       };
     } catch (error) {
-      if (error instanceof HttpException) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
-      throw new HttpException(
-        {
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: error.message || 'Internal server error',
-          error: error.name,
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  @Post('get-otp-customers')
+  @ApiOperation({ summary: 'Generate OTP for user verification' })
+  @ApiBody({ type: GetOTPRequestDto, required: true })
+  @ApiResponse({ status: 200, description: 'OTP generated successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input or mismatched data' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getOTP(
+    @Body() body: GetOTPRequestDto,
+  ): Promise<ApiResponseDto<{ otp: string; userId: number }>> {
+    try {
+      if (!body.email || !body.phone) {
+        throw new BadRequestException('Email and phone number are required');
+      }
+
+      const result = await this.customersService.generateOTP(body.email, body.phone);
+      console.log("customer result", result);
+      return {
+        statusCode: 200,
+        message: 'OTP generated successfully',
+        data: { 
+          otp: result.otp,
+          userId: result.userId
         },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  @Post('verify-otp-customers')
+  @ApiOperation({ summary: 'Verify OTP for user verification' })
+  @ApiBody({ type: VerifyOTPRequestDto, required: true })
+  @ApiResponse({ status: 200, description: 'OTP verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input or mismatched data' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async verifyOTP(
+    @Body() body: VerifyOTPRequestDto,
+  ): Promise<ApiResponseDto<{ verified: boolean }>> {
+    try {
+      console.log('Verifying OTP for user:', body.userId);
+      console.log('Provided OTP:', body.otp);
+
+      if (!body.userId || !body.otp) {
+        throw new BadRequestException('User ID and OTP are required');
+      }
+
+      const result = await this.customersService.verifyOTP(body.userId, body.otp);
+      console.log('Verification result:', result);
+      
+      if (!result) {
+        throw new BadRequestException('Invalid OTP or OTP has expired');
+      }
+
+      return {
+        statusCode: 200,
+        message: 'OTP verified successfully',
+        data: { verified: true },
+      };
+    } catch (error) {
+      console.error('Error in verifyOTP controller:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(error.message);
     }
   }
 }
